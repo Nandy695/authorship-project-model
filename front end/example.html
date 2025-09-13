@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Book Authorship Checker</title>
+  <link rel="stylesheet" href="example.css">
+</head>
+<body>
+  <h1>Book Authorship Checker</h1>
+
+  <form id="bookForm">
+    <textarea id="bookContent" placeholder="Enter your book content here..." rows="10" cols="60"></textarea><br><br>
+    <button type="submit">Check Authorship</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    // Basic SHA-256 hash generator using SubtleCrypto
+    async function generateHash(data) {
+      const encoder = new TextEncoder();
+      const dataBuffer = encoder.encode(data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function addToBlockchain(data) {
+      let chain = JSON.parse(localStorage.getItem('blockchain')) || [];
+      const previousHash = chain.length > 0 ? chain[chain.length - 1].hash : '0';
+
+      const blockData = {
+        index: chain.length + 1,
+        timestamp: new Date().toISOString(),
+        data: data,
+        previousHash: previousHash
+      };
+
+      const blockString = JSON.stringify(blockData);
+      blockData.hash = await generateHash(blockString);
+
+      chain.push(blockData);
+      localStorage.setItem('blockchain', JSON.stringify(chain));
+
+      return blockData;
+    }
+
+    document.getElementById('bookForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const bookContent = document.getElementById('bookContent').value.trim();
+
+      if (!bookContent) {
+        alert("Please enter some book content.");
+        return;
+      }
+
+      // Simulated AI content level (0–100)
+      const aiLevel = Math.floor(Math.random() * 101);
+
+      let authorship = '';
+      if (aiLevel < 20) {
+        authorship = "Human-written";
+      } else if (aiLevel <= 50) {
+        authorship = "Half written by AI";
+      } else {
+        authorship = "AI-generated";
+      }
+
+      // Simulated plagiarism result
+      const plagiarism = Math.random() < 0.5 ? "No Plagiarism" : "Plagiarism Detected";
+
+      const record = {
+        aiContentLevel: `${aiLevel}%`,
+        authorship: authorship,
+        plagiarism: plagiarism
+      };
+
+      const block = await addToBlockchain(record);
+
+      // Display results
+      document.getElementById('results').innerHTML = `
+        <h2>Results</h2>
+        <p><strong>AI Content Level:</strong> ${record.aiContentLevel}</p>
+        <p><strong>Authorship:</strong> ${record.authorship}</p>
+        <p><strong>Plagiarism Check:</strong> ${record.plagiarism}</p>
+        <p><strong>Timestamp:</strong> ${block.timestamp}</p>
+        <p><strong>Block Hash:</strong> ${block.hash}</p>
+        
+      `;
+    });
+  </script>
+</body>
+</html>
+
+example.html
+Displaying example.html.
